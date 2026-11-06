@@ -1,0 +1,179 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#063d2e">
+<title>Al Quran Audio - By Iftikar</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#061b16;color:#fff;
+ font-family:Arial,sans-serif;
+}
+header{
+ padding:28px 20px 24px;
+ text-align:center;
+ background:linear-gradient(145deg,#07533b,#03251c);
+ border-bottom:1px solid #b99239;
+}
+.logo{font-size:48px}
+h1{margin:8px 0;color:#edca70;font-size:27px}
+header p{margin:5px;color:#cbbd91}
+main{padding:18px;max-width:600px;margin:auto}
+.search{
+ width:100%;padding:15px;border-radius:12px;
+ border:1px solid #967b3e;background:#102c23;
+ color:white;font-size:16px;margin-bottom:15px;
+}
+.stats{color:#d6c28e;margin-bottom:16px}
+.surah{
+ display:flex;align-items:center;gap:13px;
+ background:#102b22;border:1px solid #294a3b;
+ border-radius:12px;padding:14px;margin-bottom:9px;
+ cursor:pointer;
+}
+.surah.active{border:1px solid #e6bd5b;background:#194332}
+.number{
+ width:36px;height:36px;border-radius:50%;
+ display:grid;place-items:center;
+ background:#1c4935;color:#edca70;
+}
+.surah-name{font-weight:bold}
+.surah-sub{font-size:12px;color:#b8c6bb;margin-top:5px}
+.playing{margin-left:auto;color:#e9c15e}
+.player{
+ position:sticky;bottom:0;
+ background:#0c3024;border-top:2px solid #c39b42;
+ padding:17px 20px 25px;
+}
+.now{text-align:center;color:#e9c15e;font-weight:bold}
+#current{margin:8px 0;text-align:center;font-size:18px}
+audio{width:100%;height:38px;margin:8px 0}
+.controls{display:flex;justify-content:center;gap:25px}
+button{
+ background:#d5ae50;color:#10251a;border:0;
+ border-radius:30px;padding:12px 20px;
+ font-size:16px;font-weight:bold;cursor:pointer;
+}
+footer{text-align:center;padding:18px;color:#bcae83;font-size:13px}
+</style>
+</head>
+<body>
+
+<header>
+<div class="logo">📖</div>
+<h1>AL QURAN AUDIO</h1>
+<p>Listen • Reflect • Remember Allah</p>
+<p>Developed by Iftikar</p>
+</header>
+
+<main>
+<input class="search" id="search"
+placeholder="Search Surah..." oninput="showSurahs()">
+
+<div class="stats">114 Surahs • Complete Quran</div>
+<div id="list"></div>
+</main>
+
+<div class="player">
+<div class="now">NOW PLAYING</div>
+<div id="current">Select a Surah</div>
+<audio id="audio" controls preload="none"></audio>
+<div class="controls">
+<button onclick="previous()">⏮ Previous</button>
+<button onclick="next()">Next ⏭</button>
+</div>
+</div>
+
+<footer>Al Quran Audio • By Iftikar</footer>
+
+<script>
+const names = [
+"Al-Fatihah","Al-Baqarah","Aal-Imran","An-Nisa",
+"Al-Maidah","Al-Anam","Al-Araf","Al-Anfal",
+"At-Tawbah","Yunus","Hud","Yusuf","Ar-Rad",
+"Ibrahim","Al-Hijr","An-Nahl","Al-Isra",
+"Al-Kahf","Maryam","Ta-Ha","Al-Anbiya",
+"Al-Hajj","Al-Muminun","An-Nur","Al-Furqan",
+"Ash-Shuara","An-Naml","Al-Qasas","Al-Ankabut",
+"Ar-Rum","Luqman","As-Sajdah","Al-Ahzab",
+"Saba","Fatir","Ya-Sin","As-Saffat","Sad",
+"Az-Zumar","Ghafir","Fussilat","Ash-Shura",
+"Az-Zukhruf","Ad-Dukhan","Al-Jathiyah",
+"Al-Ahqaf","Muhammad","Al-Fath","Al-Hujurat",
+"Qaf","Adh-Dhariyat","At-Tur","An-Najm",
+"Al-Qamar","Ar-Rahman","Al-Waqiah",
+"Al-Hadid","Al-Mujadilah","Al-Hashr",
+"Al-Mumtahanah","As-Saff","Al-Jumuah",
+"Al-Munafiqun","At-Taghabun","At-Talaq",
+"At-Tahrim","Al-Mulk","Al-Qalam","Al-Haqqah",
+"Al-Maarij","Nuh","Al-Jinn","Al-Muzzammil",
+"Al-Muddaththir","Al-Qiyamah","Al-Insan",
+"Al-Mursalat","An-Naba","An-Naziat",
+"Abasa","At-Takwir","Al-Infitar",
+"Al-Mutaffifin","Al-Inshiqaq","Al-Buruj",
+"At-Tariq","Al-Ala","Al-Ghashiyah",
+"Al-Fajr","Al-Balad","Ash-Shams","Al-Lail",
+"Ad-Duha","Ash-Sharh","At-Tin","Al-Alaq",
+"Al-Qadr","Al-Bayyinah","Az-Zalzalah",
+"Al-Adiyat","Al-Qariah","At-Takathur",
+"Al-Asr","Al-Humazah","Al-Fil","Quraysh",
+"Al-Maun","Al-Kawthar","Al-Kafirun",
+"An-Nasr","Al-Masad","Al-Ikhlas",
+"Al-Falaq","An-Nas"
+];
+
+const audio = document.getElementById("audio");
+let selected = Number(localStorage.getItem("lastSurah") || 1);
+
+function showSurahs(){
+ const query=document.getElementById("search").value.toLowerCase();
+ const list=document.getElementById("list");
+ list.innerHTML="";
+ names.forEach((name,index)=>{
+  if(!name.toLowerCase().includes(query))return;
+  const number=index+1;
+  const item=document.createElement("div");
+  item.className="surah"+(selected===number?" active":"");
+  item.innerHTML=`
+   <div class="number">${number}</div>
+   <div><div class="surah-name"></div>
+   <div class="surah-sub">Surah ${number}</div></div>
+   <div class="playing">${selected===number?"▶":"♪"}</div>`;
+  item.querySelector(".surah-name").textContent=name;
+  item.onclick=()=>playSurah(number);
+  list.appendChild(item);
+ });
+}
+
+function playSurah(number){
+ selected=Math.max(1,Math.min(114,number));
+ localStorage.setItem("lastSurah",selected);
+ const filename=String(selected).padStart(3,"0")+".mp3";
+ document.getElementById("current").textContent=
+  selected+". "+names[selected-1];
+ audio.src="https://server8.mp3quran.net/afs/"+filename;
+ audio.load();
+ audio.play().catch(()=>{
+  alert("Audio could not start. Please check your internet connection and try again.");
+ });
+ showSurahs();
+}
+
+function next(){
+ playSurah(selected<114?selected+1:1);
+}
+function previous(){
+ playSurah(selected>1?selected-1:1);
+}
+
+audio.addEventListener("ended",()=>{
+ if(selected<114)next();
+});
+
+showSurahs();
+</script>
+</body>
+</html>
